@@ -1,0 +1,145 @@
+Architecture
+Old EC2
+└─ Jenkins
+└─ /var/lib/jenkins
+│
+▼
+Backup.tar.gz
+│
+▼
+AWS S3
+│
+▼
+New EC2 Instance
+│
+▼
+Restore Jenkins
+Step 1: Stop Jenkins
+
+On the old server:
+
+sudo systemctl stop jenkins
+
+This prevents file changes during backup.
+
+Step 2: Backup Jenkins Home
+
+Jenkins stores almost everything in:
+
+/var/lib/jenkins
+
+Create backup:
+
+sudo tar -czvf jenkins-backup.tar.gz /var/lib/jenkins
+
+Verify:
+
+ls -lh jenkins-backup.tar.gz
+Step 3: Upload Backup to S3
+
+Configure AWS CLI:
+
+aws configure
+
+Upload:
+
+aws s3 cp jenkins-backup.tar.gz s3://my-jenkins-backup/
+
+Verify:
+
+aws s3 ls s3://my-jenkins-backup/
+Step 4: Launch New EC2
+
+Create a new EC2 instance.
+
+Install:
+
+Java
+Jenkins
+Git
+
+Example:
+
+sudo dnf install java-21-amazon-corretto -y
+
+Install Jenkins.
+
+Do not configure it yet.
+
+Stop Jenkins:
+
+sudo systemctl stop jenkins
+Step 5: Download Backup from S3
+aws s3 cp \
+s3://my-jenkins-backup/jenkins-backup.tar.gz .
+Step 6: Restore Jenkins Home
+
+Remove current Jenkins data:
+
+sudo rm -rf /var/lib/jenkins/\*
+
+Restore:
+
+sudo tar -xzvf jenkins-backup.tar.gz -C /
+
+You should get:
+
+/var/lib/jenkins
+
+restored.
+
+Step 7: Fix Permissions
+sudo chown -R jenkins:jenkins /var/lib/jenkins
+Step 8: Start Jenkins
+sudo systemctl start jenkins
+
+Verify:
+
+sudo systemctl status jenkins
+What Gets Restored?
+
+Everything under:
+
+/var/lib/jenkins
+
+including:
+
+Jobs
+Pipelines
+Plugins
+Credentials
+Users
+Build History
+Shared Libraries
+System Configuration
+Production Method (No Downtime)
+
+Instead of stopping Jenkins:
+
+Install ThinBackup plugin or use EBS snapshots.
+
+EBS Snapshot
+EC2
+└─ EBS Volume
+└─ Snapshot
+└─ Restore to New EC2
+
+Advantages:
+
+Faster
+Consistent
+AWS-managed
+Entire server recovery
+Automate Daily Backup to S3
+
+Example cron:
+
+0 2 \* \* \* \
+tar -czf /tmp/jenkins-$(date +\%F).tar.gz /var/lib/jenkins && \
+aws s3 cp /tmp/jenkins-$(date +\%F).tar.gz s3://my-jenkins-backup/
+
+Runs daily at 2 AM.
+
+Interview Answer
+
+Jenkins data is stored in /var/lib/jenkins. To migrate Jenkins to a new EC2 instance, I stop Jenkins, create a compressed backup of the Jenkins home directory, upload it to an S3 bucket using AWS CLI, launch a new EC2 instance, install Jenkins, download the backup from S3, restore it to /var/lib/jenkins, fix ownership permissions, and start Jenkins. For production environments, I prefer EBS snapshots or automated S3 backups for disaster recovery and migration.
