@@ -1,0 +1,86 @@
+#Install Jenkins
+#follow the documentation - https://www.jenkins.io/doc/book/installing/
+
+# 1. Install java
+
+sudo apt update
+sudo apt install fontconfig openjdk-21-jre
+java -version
+
+# 2. Install jenkins
+
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+ https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+ https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+ /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins
+
+#Verify
+systemctl status jenkins
+
+Default Port - 8080
+
+Default password path- /var/lib/jenkins/secrets/initialAdminPassword
+
+# Jenkins Job
+
+A Jenkins Job is an automation task executed by Jenkins. It can be used for building code, testing, creating Docker images, deploying applications, or running scripts. In modern CI/CD environments, Pipeline jobs are preferred because the entire workflow is defined as code in a Jenkinsfile, making it version-controlled and reusable.
+
+# Type of Jenkins triggers
+
+The common Jenkins triggers are Manual Trigger, SCM Polling, Webhook Trigger, Build Periodically (cron schedule), Remote Trigger via API, and Upstream/Downstream Triggers. In production, webhook-based triggering from Git repositories is preferred because it starts builds immediately when code is pushed and avoids the overhead of polling.
+
+# Jenkins Weather Icon Meaning
+
+The Weather Icon in Jenkins indicates the health of a job based on last 5 build results.
+
+Weather Icon Build Health
+☀️ Sunny 80%–100% successful builds
+🌤️ Partly Sunny 60%–79% successful builds
+☁️ Cloudy 40%–59% successful builds
+🌧️ Rainy 20%–39% successful builds
+⛈️ Stormy 0%–19% successful builds
+
+# Create user and give roles for them
+
+# Create a User in Jenkins
+
+# Method 1: Through Jenkins UI
+
+1.Login as an administrator.
+Go to Manage Jenkins → Users.
+Click Create User.
+Enter:
+Username
+Password
+Full Name
+Email Address
+Click Create User.
+
+# Install a Plugin
+
+Role-Based Authorization Strategy
+
+Go to Manage Jenkins → Security
+Authorization change to Role-Based Strategy
+
+# Assign Role-Based Access
+
+Go to Manage Jenkins →Manage and Assign Roles
+
+Create the Global roles
+
+Eg:
+Employee -->Overall,View -->Read
+
+Item roles
+
+Eg:
+Test --Pattern - Test._ -->this allow only Test jobs
+Dev --Pattern - Dev._ -->this allow only Dev jobs
+
+#Assign Role
+Add the Global User
+Add the item roles

@@ -1,0 +1,136 @@
+# Jenkins Agent
+A Jenkins Agent (formerly called Slave) is a machine that executes build jobs on behalf of the Jenkins Controller.
+
+Developer
+    |
+Jenkins Controller
+    |
+ -------------------
+ |        |        |
+Agent1  Agent2  Agent3
+
+# SSH Agent Connection
+Agent ---> Jenkins Controller
+
+#How do you add a new Jenkins Agent?
+Manage Jenkins → Nodes.
+New Node.
+Enter node name.
+Configure:
+Remote root directory
+Number of executors
+Labels
+Select launch method:
+SSH
+JNLP
+Add credentials.
+Save and connect.
+
+A Jenkins agent is a worker node that executes build and deployment jobs assigned by the Jenkins controller. 
+Agents help distribute workloads, run builds in parallel, and support different environments such as Linux, Windows, Docker, 
+and Kubernetes. I have configured SSH-based agents by creating nodes, assigning labels, configuring SSH credentials, and 
+troubleshooting issues related to connectivity, disk-space monitoring, Java installation, and agent availability.
+
+# Pipeline
+A Jenkins Pipeline is a way to define the entire CI/CD process as code using a Jenkinsfile.
+
+Instead of configuring jobs manually through the UI, all stages such as build, test, scan, and deploy are written in code and 
+stored in Git.
+
+Developer Pushes Code
+          |
+          v
+      Jenkins
+          |
+   ----------------
+   |      |       |
+ Build   Test   Deploy
+          |
+       Production
+
+#Types
+1. Declarative Pipeline (Most Common)
+Easy to read and maintain.
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
+            }
+        }
+    }
+}
+
+2. Scripted Pipeline
+Uses Groovy scripting.
+
+
+node {
+    stage('Build') {
+        sh 'mvn clean package'
+    }
+
+    stage('Test') {
+        sh 'mvn test'
+    }
+}
+
+
+
+
+
+
+# Real-Time DevOps Pipeline Example
+
+
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/company/app.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('SonarQube Scan') {
+            steps {
+                sh 'mvn sonar:sonar'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t app:v1 .'
+            }
+        }
+
+        stage('Push Image') {
+            steps {
+                sh 'docker push app:v1'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                sh 'kubectl apply -f deployment.yaml'
+            }
+        }
+    }
+}

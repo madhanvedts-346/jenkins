@@ -1,0 +1,552 @@
+# Difference between Declarative and Scripted Pipeline in Jenkins
+
+Declarative Pipeline uses a predefined, structured syntax and is easier to read, maintain, and validate. It is the recommended approach for most CI/CD pipelines. Scripted Pipeline is written using Groovy code and provides greater flexibility, allowing complex logic such as loops, conditions, and custom functions. Declarative is preferred for standard workflows, while Scripted is used when advanced pipeline customization is required.
+
+# Error handling
+
+# 1.Using post Block
+
+pipeline {
+agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                sh 'exit 1'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Build Successful'
+        }
+
+        failure {
+            echo 'Build Failed'
+        }
+
+        always {
+            echo 'Cleanup Activities'
+        }
+    }
+
+}
+
+# 2.Using Try-Catch
+
+pipeline {
+agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    try {
+                        sh 'exit 1'
+                    }
+                    catch(Exception e) {
+                        echo "Exception: ${e}"
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+# 3. Using catchError
+
+pipeline {
+agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                catchError(buildResult: 'SUCCESS',
+                           stageResult: 'FAILURE') {
+
+                    sh 'exit 1'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deploying'
+            }
+        }
+    }
+
+}
+
+# 4.Mark Build as Unstable
+
+pipeline {
+agent any
+
+    stages {
+        stage('Test') {
+            steps {
+                script {
+                    unstable("Some test cases failed")
+                }
+            }
+        }
+    }
+
+}
+
+# 5.Fail Build Explicitly
+
+pipeline {
+agent any
+
+    stages {
+        stage('Validation') {
+            steps {
+                script {
+                    error("Mandatory file missing")
+                }
+            }
+        }
+    }
+
+}
+
+# 6.Retry Failed Step
+
+pipeline {
+agent any
+
+    stages {
+        stage('Download') {
+            steps {
+                retry(3) {
+                    sh 'curl http://server/file'
+                }
+            }
+        }
+    }
+
+}
+
+# 7.Timeout Handling
+
+pipeline {
+agent any
+
+    stages {
+        stage('Long Running Task') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    sh './longjob.sh'
+                }
+            }
+        }
+    }
+
+}
+
+# 8.Continue Pipeline After Failure
+
+pipeline {
+agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                script {
+                    try {
+                        sh 'exit 1'
+                    }
+                    catch(Exception e) {
+                        echo "Build failed"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'Deployment continues'
+            }
+        }
+    }
+
+}
+
+# 9. Set Build Result Manually
+
+pipeline {
+agent any
+
+    stages {
+        stage('Test') {
+            steps {
+                script {
+                    currentBuild.result = 'UNSTABLE'
+                }
+            }
+        }
+    }
+
+}
+
+###
+
+currentBuild.result = 'SUCCESS'
+currentBuild.result = 'UNSTABLE'
+currentBuild.result = 'FAILURE'
+currentBuild.result = 'ABORTED'
+
+##
+
+# 10.Real DevOps Example
+
+pipeline {
+agent any
+
+    stages {
+
+        stage('Build') {
+            steps {
+                retry(2) {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                catchError(buildResult: 'SUCCESS',
+                           stageResult: 'UNSTABLE') {
+                    sh 'mvn test'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    sh './deploy.sh'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment Successful'
+        }
+
+        unstable {
+            echo 'Deployment completed with warnings'
+        }
+
+        failure {
+            echo 'Deployment Failed'
+        }
+
+        always {
+            cleanWs()
+        }
+    }
+
+}
+
+---
+
+# Environment Variables in Jenkins
+
+Environment variables are used to store values such as paths, URLs, build numbers, and configuration settings that can be accessed throughout the pipeline.
+
+# 1.Pipeline-Level Environment Variables
+
+pipeline {
+agent any
+
+    environment {
+        APP_NAME = "my-app"
+        ENV = "dev"
+    }
+
+    stages {
+        stage('Build') {
+            steps {
+                echo "Application: ${APP_NAME}"
+                echo "Environment: ${ENV}"
+            }
+        }
+    }
+
+}
+
+# 2. Stage-Level Environment Variables
+
+pipeline {
+agent any
+
+    stages {
+        stage('Build') {
+            environment {
+                JAVA_HOME = "/opt/java"
+            }
+
+            steps {
+                echo "${JAVA_HOME}"
+            }
+        }
+    }
+
+}
+
+# 3. Access Existing Jenkins Environment Variables
+
+pipeline {
+agent any
+
+    stages {
+        stage('Info') {
+            steps {
+                echo "Build Number: ${env.BUILD_NUMBER}"
+                echo "Job Name: ${env.JOB_NAME}"
+                echo "Workspace: ${env.WORKSPACE}"
+            }
+        }
+    }
+
+}
+
+# 4. Using withEnv
+
+pipeline {
+agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                withEnv(["ENV=prod", "VERSION=2.0"]) {
+                    sh 'echo $ENV'
+                    sh 'echo $VERSION'
+                }
+            }
+        }
+    }
+
+}
+
+#After the block ends, variables are removed.
+
+## Real DevOps Example
+
+pipeline {
+agent any
+
+    environment {
+        APP_NAME = "springboot-app"
+        DOCKER_IMAGE = "madhan/springboot-app"
+        AWS_REGION = "ap-south-1"
+    }
+
+    stages {
+
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:$BUILD_NUMBER .'
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Deploying ${APP_NAME}"
+                echo "Build Number ${BUILD_NUMBER}"
+            }
+        }
+    }
+
+}
+
+---
+
+# Parameterized Job in Jenkins
+
+A parameterized job allows users to provide input values when triggering a build instead of hardcoding them in the pipeline.
+
+pipeline {
+agent any
+
+    parameters {
+
+        string(
+        name: 'Name',
+        defaultValue: 'DEVOPS Team',
+        description: 'Enter your name'
+        )
+
+
+        choice(
+            name: 'ENV',
+            choices: ['dev', 'qa', 'prod']
+        )
+    }
+
+    stages {
+
+        stage('Deploy') {
+            steps {
+                script {
+                    if(params.ENV == 'prod') {
+                        echo "Deploying to Production Done by ${params.Name}"
+                    } else {
+                        echo "Deploying to ${params.ENV}"
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+---
+
+# How to Store Credentials in Jenkins
+
+To store credentials in Jenkins, I go to Manage Jenkins → Credentials → Global Credentials → Add Credentials. Jenkins supports multiple credential types such as Username/Password, Secret Text, and SSH Private Keys. Each credential is assigned a unique ID, which is then referenced securely in the pipeline using withCredentials() or the credentials() function. This prevents sensitive information from being hardcoded in Jenkinsfiles and keeps secrets centrally managed and secure.
+
+# Docker Login Example with credentials()
+
+pipeline {
+agent any
+
+    environment {
+        DOCKER_CREDS = credentials('docker-hub-creds')
+    }
+
+    stages {
+        stage('Docker Login') {
+            steps {
+                sh '''
+                docker login -u $DOCKER_CREDS_USR \
+                -p $DOCKER_CREDS_PSW
+                '''
+            }
+        }
+    }
+
+}
+
+# using withCredentials
+
+pipeline {
+agent any
+
+    stages {
+        stage('GitHub') {
+            steps {
+
+                withCredentials([
+                    string(
+                        credentialsId: 'github-token',
+                        variable: 'TOKEN'
+                    )
+                ]) {
+
+                    sh '''
+                    curl -H "Authorization: token $TOKEN" \
+                    https://api.github.com/user
+                    '''
+                }
+            }
+        }
+    }
+
+}
+
+---
+
+# Parallel Stages in Jenkins
+
+Parallel stages allow multiple stages to run simultaneously instead of one after anoth
+
+pipeline {
+agent any
+
+    stages {
+
+        stage('Testing') {
+
+            parallel {
+
+                stage('Linux Test') {
+                    steps {
+                        echo 'Running Linux Tests'
+                    }
+                }
+
+                stage('Windows Test') {
+                    steps {
+                        echo 'Running Windows Tests'
+                    }
+                }
+
+                stage('Mac Test') {
+                    steps {
+                        echo 'Running Mac Tests'
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+---
+
+# Multi-Agent Pipeline in Jenkins
+
+A Multi-Agent Pipeline uses different Jenkins agents (nodes) for different stages of the pipeline.
+
+pipeline {
+agent none
+
+    stages {
+
+        stage('Build') {
+            agent {
+                label 'linux'
+            }
+
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Test') {
+            agent {
+                label 'windows'
+            }
+
+            steps {
+                bat 'mvn test'
+            }
+        }
+
+        stage('Deploy') {
+            agent {
+                label 'k8s-agent'
+            }
+
+            steps {
+                sh 'kubectl apply -f deployment.yaml'
+            }
+        }
+    }
+
+}
