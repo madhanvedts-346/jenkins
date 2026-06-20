@@ -1,5 +1,5 @@
 def call(String imageName) {
     sh """
-       echo "docker build $imagename"
+       echo "docker build ${imagename}"
     """
 }
