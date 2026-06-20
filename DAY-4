@@ -1,0 +1,4 @@
+# shared library 
+In Jenkins, a Shared Library is a way to reuse common pipeline code across multiple Jenkins jobs 
+instead of duplicating the same Groovy scripts in every Jenkinsfile.
+
