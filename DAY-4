@@ -13,7 +13,8 @@ def call(String imageName) {
 #Jenkinsfile
 
 Step 1: Install Required Plugin
-Shared Groovy Libraries
+Pipeline: Shared Groovy Libraries through HTTP retrieval
+
 
 Step 2: Configure Global Shared Library
 Manage Jenkins
@@ -68,3 +69,74 @@ pipeline {
         }
     }
 }
+
+
+
+-----------------------------------------------------------
+#Email configuration
+
+
+# Enable 2 step verification
+# Add App password
+
+
+Step 1: Install Email Plugin
+Email Extension Template Plugin
+
+Step 2: Configure SMTP Server
+Manage Jenkins
+ → System
+    → Extended E-mail Notification
+
+
+SMTP Server: smtp.gmail.com
+SMTP Port: 587
+Use SSL: No
+Use TLS: Yes
+credential -->Add username and passowrd (gmail and app password)
+
+
+Step 3: Configure System Email
+
+Manage Jenkins
+ → System
+    → Jenkins Location
+
+System Admin e-mail address:
+jenkins@company.com
+
+Step 4: Test Email
+
+Manage Jenkins
+ → System
+    → Extended E-mail Notification
+
+Step 5: Use in Jenkins Pipeline
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo 'Building...'
+            }
+        }
+    }
+
+    post {
+        success {
+            emailext(
+                subject: "SUCCESS: ${env.JOB_NAME}",
+                body: "Build Successful",
+                to: "mathanrs14@gmail.com,barathbaby20@gmail.com"
+            )
+        }
+    }
+}
+
+
+
+
+
+
