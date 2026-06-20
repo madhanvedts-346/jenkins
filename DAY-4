@@ -3,10 +3,10 @@ In Jenkins, a Shared Library is a way to reuse common pipeline code across multi
 instead of duplicating the same Groovy scripts in every Jenkinsfile.
 
 #create the folder in GitHub with name name var and create the groovy file
-#vars/dockerBuild.groovy
+#vars/buildMaven.groovy
 def call(String imageName) {
     sh """
-       docker build -t ${imageName}:${env.BUILD_NUMBER} .
+       echo "docker build ${imageName}"
     """
 }
 
@@ -18,14 +18,15 @@ Shared Groovy Libraries
 Step 2: Configure Global Shared Library
 Manage Jenkins
  → System
- → Global Pipeline Libraries
+ → Global Trusted Pipeline Libraries
+
 
  Click Add.
 
  Eg:
 
 Name: shared-lib
-Default version: main
+Default version: master
 Allow default version to be overridden: ✓ (optional)
 Include @Library changes in job recent changes: ✓ (optional)
 Retrieval method: Modern SCM
@@ -62,7 +63,7 @@ pipeline {
     stages {
         stage('Docker Build') {
             steps {
-                dockerBuild('myapp')
+                buildMaven('myapp')
             }
         }
     }
